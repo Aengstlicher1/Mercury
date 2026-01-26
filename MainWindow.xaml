@@ -1,0 +1,49 @@
+﻿<ui:FluentWindow x:Class="Mercury.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:pages="clr-namespace:Mercury.Views.Pages"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        xmlns:local="clr-namespace:Mercury"
+        mc:Ignorable="d" Name="Window"
+        Title="Mercury" Height="450" Width="800" MinHeight="240" MinWidth="600"
+        WindowStyle="None" ExtendsContentIntoTitleBar="True" ui:Design.Background="{DynamicResource ApplicationBackgroundBrush}"
+        WindowBackdropType="Mica">
+    
+    <Grid>
+        <ui:TitleBar Grid.Row="0" Name="TitleBar"
+                     CloseWindowByDoubleClickOnIcon="True"
+                     HorizontalContentAlignment="Stretch"
+                     Title="Mercury">
+            <ui:TitleBar.Icon>
+                <ui:ImageIcon Source="/Assets/Icon.png"
+                              Margin="-2,-2,-2,-2"
+                              RenderOptions.BitmapScalingMode="HighQuality"/>
+            </ui:TitleBar.Icon>
+            <ui:TitleBar.CenterContent>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="3*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <ui:TextBox Grid.Column="1" 
+                                VerticalAlignment="Center" PlaceholderText="Search songs, artist..." 
+                                GotFocus="TextBox_GotFocus"/>
+                </Grid>
+            </ui:TitleBar.CenterContent>
+        </ui:TitleBar>
+
+        <ui:NavigationView Name="NavView" IsPaneOpen="False"
+                           IsFooterSeparatorVisible="False" IsTopSeparatorVisible="False"
+                           IsPaneToggleVisible="False" IsBackButtonVisible="Visible"
+                           TitleBar="{Binding ElementName=TitleBar, Mode=OneWay}"
+                           BreadcrumbBar="{Binding ElementName=BreadcrumbBar}"
+                           PaneDisplayMode="Left">
+            <ui:NavigationView.MenuItems>
+                <ui:NavigationViewItem Icon="{ui:SymbolIcon Symbol=Search24}" TargetPageType="{x:Type pages:SearchView}" NavigationCacheMode="Required"/>
+            </ui:NavigationView.MenuItems>
+        </ui:NavigationView>
+    </Grid>
+</ui:FluentWindow>

@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Mercury": {
+      "commandName": "Project",
+      "hotReloadEnabled": false
+    }
+  }
+}

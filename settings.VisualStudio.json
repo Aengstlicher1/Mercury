@@ -1,0 +1,5 @@
+/* Visual Studio Settings File */
+{
+  "debugging.xamlHotReload.enableWpf": true,
+  "debugging.xamlHotReload.enableXamlHotReload": true
+}
