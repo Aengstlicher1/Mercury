@@ -18,6 +18,7 @@ namespace Mercury
                 // Wpf-UI Services
                 services.AddSingleton<INavigationViewPageProvider, ServiceProviderPageProvider>();
                 services.AddSingleton<INavigationService, NavigationService>();
+                services.AddSingleton<IAppService, AppService>();
 
                 // Custom
                 services.AddSingleton<ISearchService, SearchService>();
@@ -25,10 +26,12 @@ namespace Mercury
                 // Views
                 services.AddSingleton<MainWindow>();
                 services.AddTransient<SearchView>();
+                services.AddTransient<SongView>();
 
                 // ViewModels
                 services.AddSingleton<MainWindowModel>();
                 services.AddTransient<SearchViewModel>();
+                services.AddTransient<SongViewModel>();
             })
             .Build();
 

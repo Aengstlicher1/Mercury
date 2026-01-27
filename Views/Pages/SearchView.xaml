@@ -14,6 +14,7 @@
 
     <Grid>
         <ItemsControl
+            Name="UsersList"
             Grid.Row="1"
             Margin="0,4"
             ItemsSource="{Binding SearchResults}"
@@ -26,7 +27,9 @@
                         Margin="8,4"
                         Padding="0"
                         HorizontalAlignment="Stretch"
-                        HorizontalContentAlignment="Stretch">
+                        HorizontalContentAlignment="Stretch"
+                        Command="{Binding DataContext.EnterSongViewCommand, RelativeSource={RelativeSource AncestorType={x:Type ItemsControl}}}"
+                        CommandParameter="{Binding .}">
                         <Grid HorizontalAlignment="Stretch">
                             <StackPanel
                                 HorizontalAlignment="Left"
@@ -54,8 +57,15 @@
                                     <TextBlock
                                         Margin="0,0,0,2"
                                         VerticalAlignment="Bottom"
-                                        Foreground="{DynamicResource TextFillColorTertiaryBrush}"
-                                        Text="{Binding Author}" />
+                                        Foreground="{DynamicResource TextFillColorTertiaryBrush}">
+                                        <TextBlock.Text>
+                                            <MultiBinding StringFormat="{}{0} • {1} • {2}">
+                                                <Binding Path="Type" FallbackValue="Type" />
+                                                <Binding Path="Author" FallbackValue="Author" />
+                                                <Binding Path="Album" FallbackValue="Album" />
+                                            </MultiBinding>
+                                        </TextBlock.Text>
+                                    </TextBlock>
                                 </Grid>
                             </StackPanel>
 
