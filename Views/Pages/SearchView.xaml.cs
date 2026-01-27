@@ -1,52 +1,90 @@
-﻿using Mercury.Models;
+﻿using CommunityToolkit.Mvvm.Messaging;
+using Mercury.Models;
+using Mercury.Services;
+using Microsoft.Extensions.Primitives;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.DirectoryServices;
 using System.Runtime.CompilerServices;
 using System.Windows.Controls;
-using YouTubeApi;
 
 namespace Mercury.Views.Pages
 {
     public partial class SearchView : Page
     {
-        public SearchView()
+        public SearchView(SearchViewModel viewModel)
         {
             InitializeComponent();
-            DataContext = new SearchViewModel();
+            DataContext = viewModel;
         }
     }
 
     public class SearchViewModel : INotifyPropertyChanged
     {
+        private readonly ISearchService _searchService;
+        private CancellationTokenSource? _searchCts;
+
         private ObservableCollection<Song> _searchResults = new();
         public ObservableCollection<Song> SearchResults
         {
             get => _searchResults;
-            set
+            set => SetProperty(ref _searchResults, value);
+        }
+
+        private string? _searchQuery;
+        public string? SearchQuery
+        {
+            get => _searchQuery;
+            set => SetProperty(ref _searchQuery, value);
+        }
+
+        public SearchViewModel(ISearchService searchService)
+        {
+            _searchService = searchService;
+            _searchService.SearchQueryChanged += OnSearchQueryChanged;
+
+            // Inititalize the search
+            SearchQuery = _searchService.SearchQuery;
+            _ = PerformSearchAsync(SearchQuery);
+        }
+
+        private void OnSearchQueryChanged(object? sender, string query)
+        {
+            SearchQuery = query;
+            _ = PerformSearchAsync(SearchQuery);
+        }
+
+        private async Task PerformSearchAsync(string query)
+        {
+            // Cancel previous Search and renew token
+            _searchCts?.Cancel();
+            _searchCts = new CancellationTokenSource();
+            var token = _searchCts.Token;
+
+
+            try
             {
-                SetProperty(ref _searchResults, value);
+                await Task.Delay(300, token);
+
+                // check for clear query
+                if (string.IsNullOrWhiteSpace(query))
+                {
+                    SearchResults.Clear();
+                    return;
+                }
+
+                var results = await SongTools.GetSongs(query);
+
+                if (!token.IsCancellationRequested)
+                {
+                    SearchResults = new ObservableCollection<Song>(results);
+                }
+            }
+            catch (TaskCanceledException)
+            {
+
             }
         }
-
-        public SearchViewModel()
-        {
-            Task.Run(async () => 
-            {
-                SearchResults = new ObservableCollection<Song>(await SearchSongs("Love Me"));
-            });
-        }
-
-        private async Task<List<Song>> SearchSongs(string query)
-        {
-            var test = await YouTube.SearchYouTubeMusic(query, YouTube.MusicSearchFilter.Songs);
-            List<Song> songs = test.CurrentPage.ContentItems
-                .Where(c => c.Content is YouTube.Video)
-                .Select(v => v.Content as YouTube.Video)
-                .Select(s => new Song() { Media = s! })
-                .ToList()!;
-            return songs;
-        }
-
 
 
         public event PropertyChangedEventHandler? PropertyChanged;

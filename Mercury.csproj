@@ -10,15 +10,22 @@
 
   <ItemGroup>
     <None Remove="Assets\Icon.png" />
+    <None Remove="Assets\Letter.png" />
   </ItemGroup>
 
   <ItemGroup>
     <Content Include="Assets\Icon.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="Assets\Letter.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.2" />
     <PackageReference Include="WPF-UI" Version="4.2.0" />
     <PackageReference Include="WPF-UI.Abstractions" Version="4.2.0" />
     <PackageReference Include="WPF-UI.DependencyInjection" Version="4.2.0" />
@@ -26,10 +33,6 @@
     <PackageReference Include="WPF-UI.Tray" Version="4.2.0" />
     <PackageReference Include="WPF-UI.Violeta" Version="4.2.0.1" />
     <PackageReference Include="YouTubeApi" Version="2.0.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Models\Converters\" />
   </ItemGroup>
 
 </Project>

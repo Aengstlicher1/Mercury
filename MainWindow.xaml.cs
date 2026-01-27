@@ -1,35 +1,85 @@
-﻿using Mercury.Views.Pages;
+﻿using Mercury.Services;
+using Mercury.Views.Pages;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
+using Wpf.Ui;
+using Wpf.Ui.Appearance;
 using Wpf.Ui.Controls;
+using Wpf.Ui.Input;
 
 
 namespace Mercury
 {
     public partial class MainWindow : FluentWindow
     {
-        public MainWindow()
+        public MainWindow(MainWindowModel viewModel, INavigationService navigationService)
         {
             InitializeComponent();
-            DataContext = new MainWindowModel();
-            Loaded += (s, e) => NavView.Navigate(typeof(SearchView));
-        }
+            DataContext = viewModel;
 
-        private void TextBox_GotFocus(object sender, System.Windows.RoutedEventArgs e)
-        {
-            NavView.Navigate(typeof(SearchView));
+            // Set Up Navigation
+            navigationService.SetNavigationControl(NavView);
+            viewModel.SetNavigationService(navigationService);
+
+            Loaded += (s, e) => NavView.Navigate(typeof(SearchView));
+            SystemThemeWatcher.Watch(this);
         }
     }
 
     public class MainWindowModel : INotifyPropertyChanged
     {
-        
-        public MainWindowModel()
+        private readonly ISearchService _searchService;
+        private INavigationService? _navigationService;
+
+        private string _searchText = string.Empty;
+        public string SearchText
         {
-            
+            get => _searchText;
+            set
+            {
+                if (SetProperty(ref _searchText, value))
+                {
+                    OnSearchTextChanged(value);
+                }
+            }
         }
 
-        
+        public MainWindowModel(ISearchService searchService)
+        {
+            _searchService = searchService;
+        }
+
+        public ICommand SwtichHudVisibilityCommand => new RelayCommand<object>(SwitchHudVisibility);
+        private void SwitchHudVisibility(object? parameter)
+        {
+            if (parameter is UIElement element)
+            {
+                element.Visibility = element.Visibility == Visibility.Visible
+                ? Visibility.Collapsed
+                : Visibility.Visible;
+            }
+        }
+
+        public void SetNavigationService(INavigationService navigationService)
+        {
+            _navigationService = navigationService;
+        }
+
+        private void OnSearchTextChanged(string? value)
+        {
+            // Update the search service
+            _searchService.SearchQuery = value;
+
+            // Navigate to SearchView when user starts typing
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                _navigationService?.Navigate(typeof(SearchView));
+            }
+        }
+
         public event PropertyChangedEventHandler? PropertyChanged;
 
         protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
