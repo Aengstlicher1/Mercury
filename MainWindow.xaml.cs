@@ -1,12 +1,8 @@
-﻿using CommunityToolkit.Mvvm.Input;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using LibVLCSharp.Shared;
 using Mercury.Services;
 using Mercury.Views.Pages;
-using System.ComponentModel;
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Input;
 using Wpf.Ui;
 using Wpf.Ui.Appearance;
 using Wpf.Ui.Controls;
@@ -16,49 +12,65 @@ namespace Mercury
 {
     public partial class MainWindow : FluentWindow
     {
-        public MainWindow(MainWindowModel viewModel, INavigationService navigationService)
+        public MainWindow(MainWindowModel viewModel, INavigationService navigationService, IAppService appService, IMediaPlayerService playerService)
         {
             InitializeComponent();
             DataContext = viewModel;
 
             // Set Up Navigation
             navigationService.SetNavigationControl(NavView);
-            viewModel.SetNavigationService(navigationService);
-
             Loaded += (s, e) => NavView.Navigate(typeof(SearchView));
+
+            // Set up Vlc MediaPlayer and its service
+            VideoView.MediaPlayer = playerService.MediaPlayer;
+
             SystemThemeWatcher.Watch(this);
         }
     }
 
-    public partial class MainWindowModel : INotifyPropertyChanged
+    public partial class MainWindowModel : ObservableObject
     {
         private readonly ISearchService _searchService;
         private INavigationService? _navigationService;
+        private IMediaPlayerService _playerService;
 
+        [ObservableProperty]
         private string _searchText = string.Empty;
-        public string SearchText
+
+        [ObservableProperty]
+        private double _songProgress = 0d;
+
+        public MainWindowModel(ISearchService searchService, INavigationService navigationService, IMediaPlayerService playerService)
         {
-            get => _searchText;
-            set
+            _searchService = searchService;
+            _navigationService = navigationService;
+            _playerService = playerService;
+        }
+
+        [RelayCommand]
+        private void TogglePlay(Button button)
+        {
+            if (_playerService.CurrentSong != null)
             {
-                if (SetProperty(ref _searchText, value))
+                if (!_playerService.MediaPlayer.IsPlaying)
                 {
-                    OnSearchTextChanged(value);
+                    _playerService.StartSong();
+                    (button.Icon as SymbolIcon)!.Symbol = SymbolRegular.Pause24;
+                }
+                else
+                {
+                    _playerService.PauseSong();
+                    (button.Icon as SymbolIcon)!.Symbol = SymbolRegular.Play24;
                 }
             }
         }
 
-        public MainWindowModel(ISearchService searchService)
-        {
-            _searchService = searchService;
-        }
+        [RelayCommand]
+        private void PlayPrevious() => _playerService.PreviousSong();
+        [RelayCommand]
+        private void PlayNext() => _playerService.NextSong();
 
-        public void SetNavigationService(INavigationService navigationService)
-        {
-            _navigationService = navigationService;
-        }
-
-        private void OnSearchTextChanged(string? value)
+        partial void OnSearchTextChanged(string value)
         {
             // Update the search service
             _searchService.SearchQuery = value;
@@ -68,23 +80,6 @@ namespace Mercury
             {
                 _navigationService?.Navigate(typeof(SearchView));
             }
-        }
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-
-        protected bool SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
-        {
-            if (EqualityComparer<T>.Default.Equals(field, value))
-                return false;
-
-            field = value;
-            OnPropertyChanged(propertyName);
-            return true;
         }
     }
 }

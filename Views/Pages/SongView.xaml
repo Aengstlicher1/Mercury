@@ -9,6 +9,6 @@
       Title="SongView">
 
     <Grid>
-        <TextBlock Text="{Binding CurrentSong.Title, FallbackValue='Title'}"/>
+        
     </Grid>
 </Page>

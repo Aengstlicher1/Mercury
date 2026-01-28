@@ -18,10 +18,11 @@ namespace Mercury
                 // Wpf-UI Services
                 services.AddSingleton<INavigationViewPageProvider, ServiceProviderPageProvider>();
                 services.AddSingleton<INavigationService, NavigationService>();
-                services.AddSingleton<IAppService, AppService>();
 
                 // Custom
                 services.AddSingleton<ISearchService, SearchService>();
+                services.AddSingleton<IAppService, AppService>();
+                services.AddSingleton<IMediaPlayerService, MediaPlayerService>();
 
                 // Views
                 services.AddSingleton<MainWindow>();

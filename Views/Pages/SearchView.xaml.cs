@@ -1,17 +1,11 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using CommunityToolkit.Mvvm.Messaging;
 using Mercury.Models;
 using Mercury.Services;
-using Microsoft.Extensions.Primitives;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.DirectoryServices;
-using System.Runtime.CompilerServices;
+using System.Diagnostics;
 using System.Windows.Controls;
-using System.Windows.Input;
 using Wpf.Ui;
-using Wpf.Ui.Input;
 
 namespace Mercury.Views.Pages
 {
@@ -29,6 +23,8 @@ namespace Mercury.Views.Pages
         private readonly ISearchService _searchService;
         private INavigationService _navigationService;
         private IAppService _appService;
+        private IMediaPlayerService _playerService;
+
         private CancellationTokenSource? _searchCts;
 
         [ObservableProperty]
@@ -37,11 +33,13 @@ namespace Mercury.Views.Pages
         [ObservableProperty]
         private string? _searchQuery = string.Empty;
 
-        public SearchViewModel(ISearchService searchService, INavigationService navigationService, IAppService appService)
+        public SearchViewModel(ISearchService searchService, INavigationService navigationService, IAppService appService, IMediaPlayerService playerService)
         {
             _navigationService = navigationService;
             _searchService = searchService;
             _appService = appService;
+            _playerService = playerService;
+
             _searchService.SearchQueryChanged += OnSearchQueryChanged;
 
             // Inititalize the search
@@ -50,10 +48,17 @@ namespace Mercury.Views.Pages
         }
 
         [RelayCommand]
-        private void EnterSongView(Song? song)
+        private async Task PlaySong(Song song)
         {
-            if (song == null) return;
-            _appService.CurrentSong = song;
+            _ = _playerService.SetSong(song);
+
+            Debug.WriteLine($"Now playing: {song!.ToString()}");
+        }
+
+        [RelayCommand]
+        private void EnterSongView(Song song)
+        {
+            _playerService.CurrentSong = song;
             _navigationService.Navigate(typeof(SongView));
         }
 
@@ -79,6 +84,7 @@ namespace Mercury.Views.Pages
                 if (string.IsNullOrWhiteSpace(query))
                 {
                     SearchResults.Clear();
+                    _playerService.Queue.Clear();
                     return;
                 }
 
@@ -86,7 +92,12 @@ namespace Mercury.Views.Pages
 
                 if (!token.IsCancellationRequested)
                 {
-                    SearchResults = new ObservableCollection<Song>(results);
+                    foreach (var item in results)
+                    {
+                        SearchResults.Add(item);
+                        _playerService.Queue.Add(item);
+                        await Task.Delay(25);
+                    }
                 }
             }
             catch (TaskCanceledException)
