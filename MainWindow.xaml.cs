@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using LibVLCSharp.Shared;
 using Mercury.Services;
 using Mercury.Views.Pages;
 using Wpf.Ui;
