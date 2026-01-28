@@ -1,4 +1,6 @@
-﻿using CommunityToolkit.Mvvm.Messaging;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using Mercury.Models;
 using Mercury.Services;
 using Microsoft.Extensions.Primitives;
@@ -7,6 +9,9 @@ using System.ComponentModel;
 using System.DirectoryServices;
 using System.Runtime.CompilerServices;
 using System.Windows.Controls;
+using System.Windows.Input;
+using Wpf.Ui;
+using Wpf.Ui.Input;
 
 namespace Mercury.Views.Pages
 {
@@ -19,33 +24,37 @@ namespace Mercury.Views.Pages
         }
     }
 
-    public class SearchViewModel : INotifyPropertyChanged
+    public partial class SearchViewModel : ObservableObject
     {
         private readonly ISearchService _searchService;
+        private INavigationService _navigationService;
+        private IAppService _appService;
         private CancellationTokenSource? _searchCts;
 
+        [ObservableProperty]
         private ObservableCollection<Song> _searchResults = new();
-        public ObservableCollection<Song> SearchResults
-        {
-            get => _searchResults;
-            set => SetProperty(ref _searchResults, value);
-        }
 
-        private string? _searchQuery;
-        public string? SearchQuery
-        {
-            get => _searchQuery;
-            set => SetProperty(ref _searchQuery, value);
-        }
+        [ObservableProperty]
+        private string? _searchQuery = string.Empty;
 
-        public SearchViewModel(ISearchService searchService)
+        public SearchViewModel(ISearchService searchService, INavigationService navigationService, IAppService appService)
         {
+            _navigationService = navigationService;
             _searchService = searchService;
+            _appService = appService;
             _searchService.SearchQueryChanged += OnSearchQueryChanged;
 
             // Inititalize the search
             SearchQuery = _searchService.SearchQuery;
-            _ = PerformSearchAsync(SearchQuery);
+            _ = PerformSearchAsync(SearchQuery!);
+        }
+
+        [RelayCommand]
+        private void EnterSongView(Song? song)
+        {
+            if (song == null) return;
+            _appService.CurrentSong = song;
+            _navigationService.Navigate(typeof(SongView));
         }
 
         private void OnSearchQueryChanged(object? sender, string query)
@@ -64,9 +73,9 @@ namespace Mercury.Views.Pages
 
             try
             {
-                await Task.Delay(300, token);
+                await Task.Delay(100, token);
 
-                // check for clear query
+                // check for empty query
                 if (string.IsNullOrWhiteSpace(query))
                 {
                     SearchResults.Clear();
@@ -84,24 +93,6 @@ namespace Mercury.Views.Pages
             {
 
             }
-        }
-
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-
-        protected bool SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
-        {
-            if (EqualityComparer<T>.Default.Equals(field, value))
-                return false;
-
-            field = value;
-            OnPropertyChanged(propertyName);
-            return true;
         }
     }
 }

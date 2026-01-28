@@ -5,6 +5,7 @@ namespace Mercury.Services
     public class ServiceProviderPageProvider : INavigationViewPageProvider
     {
         private readonly IServiceProvider _serviceProvider;
+        private readonly Dictionary<Type, object> _pageCache = new();
 
         public ServiceProviderPageProvider(IServiceProvider serviceProvider)
         {
@@ -13,7 +14,24 @@ namespace Mercury.Services
 
         public object? GetPage(Type pageType)
         {
-            return _serviceProvider.GetService(pageType);
+            if (_pageCache.TryGetValue(pageType, out var cachedPage))
+            {
+                return cachedPage;
+            }
+
+            var page = _serviceProvider.GetService(pageType);
+
+            if (page != null)
+            {
+                _pageCache[pageType] = page;
+            }
+
+            return page;
+        }
+
+        public void ClearCache()
+        {
+            _pageCache.Clear();
         }
     }
 }
