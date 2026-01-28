@@ -12,7 +12,7 @@ namespace Mercury.Models
         public string Url => Media.Url;
         public string Album => Media.Author.Split('•').Last();
         public TimeSpan Duration => Media.Duration;
-        public readonly string Type = "Song";
+        public string Type => "Song";
 
         public string FormatedDurarion => Media.Duration.TotalHours >= 1d ? Media.Duration.ToString(@"h\:mm\:ss") : Media.Duration.ToString(@"m\:ss");
 

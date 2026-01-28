@@ -9,6 +9,7 @@
     xmlns:models="clr-namespace:Mercury.Models"
     xmlns:pages="clr-namespace:Mercury.Views.Pages"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:vlc="clr-namespace:LibVLCSharp.WPF;assembly=LibVLCSharp.WPF"
     Name="Window"
     Title="Mercury"
     Width="800"
@@ -26,9 +27,10 @@
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="64"/>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="64" />
         </Grid.RowDefinitions>
+
         <ui:TitleBar
             Name="TitleBar"
             Title="Mercury"
@@ -54,6 +56,8 @@
             </ui:TitleBar.CenterContent>
         </ui:TitleBar>
 
+        <vlc:VideoView Name="VideoView" Visibility="Collapsed" />
+
         <ui:NavigationView
             Name="NavView"
             BreadcrumbBar="{Binding ElementName=BreadcrumbBar}"
@@ -77,36 +81,82 @@
         </ui:NavigationView>
 
         <Border
-            Grid.Row="1"
             Name="HudBorder"
-            HorizontalAlignment="Stretch"
-            VerticalAlignment="Stretch"
-            Background="{DynamicResource ControlFillColorDefaultBrush}"
+            Grid.Row="1"
+            Background="{DynamicResource ApplicationBackgroundBrush}"
             BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
             BorderThickness="2,2,2,0"
             CornerRadius="6,6,0,0">
             <Grid>
-                <StackPanel
-                    Margin="0,0,6,0"
-                    HorizontalAlignment="Left"
-                    Orientation="Horizontal"
-                    Tag="Left">
-                    
-                </StackPanel>
-                <StackPanel
-                    Margin="0,0,6,0"
-                    HorizontalAlignment="Center"
-                    Orientation="Horizontal"
-                    Tag="Middle">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="2*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="24" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
 
-                </StackPanel>
-                <StackPanel
-                    Margin="0,0,6,0"
-                    HorizontalAlignment="Right"
-                    Orientation="Horizontal"
-                    Tag="Right">
+                <Slider
+                    Margin="0,4,0,0"
+                    Grid.Row="0"
+                    Grid.Column="1"
+                    VerticalAlignment="Top"
+                    IsTabStop="False"
+                    LargeChange="0"
+                    Maximum="100"
+                    Minimum="0"
+                    Value="{Binding SongProgress, Mode=TwoWay}" />
+                <Grid Grid.Row="1" Grid.Column="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
 
-                </StackPanel>
+                    <ui:Button
+                        Grid.Column="2"
+                        Name="MediaPreviousButton"
+                        Width="{Binding ActualHeight, RelativeSource={RelativeSource Self}}"
+                        Margin="6"
+                        Padding="0"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Stretch"
+                        Appearance="Secondary"
+                        BorderThickness="0"
+                        Command="{Binding PlayPreviousCommand}"
+                        Icon="{ui:SymbolIcon Symbol=Previous24,
+                                             FontSize=24}" />
+                    <ui:Button
+                        Grid.Column="3"
+                        Name="MediaPlayButton"
+                        Width="{Binding ActualHeight, RelativeSource={RelativeSource Self}}"
+                        Margin="6"
+                        Padding="0"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Stretch"
+                        Appearance="Secondary"
+                        BorderThickness="0"
+                        Command="{Binding TogglePlayCommand}"
+                        Icon="{ui:SymbolIcon Symbol=Play24,
+                                             FontSize=24}" />
+                    <ui:Button
+                        Grid.Column="4"
+                        Name="MediaNextButton"
+                        Width="{Binding ActualHeight, RelativeSource={RelativeSource Self}}"
+                        Margin="6"
+                        Padding="0"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Stretch"
+                        BorderThickness="0"
+                        Command="{Binding PlayNextCommand}"
+                        Icon="{ui:SymbolIcon Symbol=Next24,
+                                             FontSize=24}" />
+                </Grid>
             </Grid>
         </Border>
     </Grid>

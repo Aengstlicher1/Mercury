@@ -1,10 +1,9 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using Accessibility;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
+using LibVLCSharp.Shared;
 using Mercury.Models;
 using Mercury.Services;
-using System.ComponentModel;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using System.Windows.Controls;
 using Wpf.Ui;
 
@@ -24,17 +23,23 @@ namespace Mercury.Views.Pages
     {
         private readonly INavigationService _navigationService;
         private readonly IAppService _appService;
+        private readonly IMediaPlayerService _mediaPlayerService;
+
+        [ObservableProperty]
+        private MediaPlayer _mediaPlayer;
 
         [ObservableProperty]
         private Song? _currentSong;
 
-        public SongViewModel(INavigationService navigationService, IAppService appService)
+        public SongViewModel(INavigationService navigationService, IAppService appService, IMediaPlayerService mediaPlayerService)
         {
             _navigationService = navigationService;
             _appService = appService;
+            _mediaPlayerService = mediaPlayerService;
+            _mediaPlayer = mediaPlayerService.MediaPlayer;
 
             WeakReferenceMessenger.Default.Register<CurrentSongChangedMessage>(this);
-            _currentSong = _appService.CurrentSong;
+            _currentSong = _mediaPlayerService.CurrentSong;
         }
 
         public void Receive(CurrentSongChangedMessage message)
