@@ -99,6 +99,7 @@
                 </Grid.RowDefinitions>
 
                 <Slider
+                    Name="PosSlider"
                     Margin="0,4,0,0"
                     Grid.Row="0"
                     Grid.Column="1"

@@ -5,6 +5,7 @@ using LibVLCSharp.Shared;
 using Mercury.Models;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Windows.Controls;
 using Windows.Media;
 using Windows.Storage.Streams;
 using Wpf.Ui.Controls;
@@ -29,8 +30,9 @@ namespace Mercury.Services
         void PreviousSong();
         void NextSong();
 
-        Button? PlayButton { get; set; }
-        Button? RepeatButton { get; set; }
+        Wpf.Ui.Controls.Button? PlayButton { get; set; }
+        Wpf.Ui.Controls.Button? RepeatButton { get; set; }
+        Slider? PositionSlider { get; set; }
     }
 
     public partial class MediaPlayerService : ObservableObject, IMediaPlayerService
@@ -51,8 +53,9 @@ namespace Mercury.Services
         }
         public ObservableCollection<Song> Queue { get; } = new();
 
-        public Button? PlayButton { get; set; }
-        public Button? RepeatButton { get; set; }
+        public Wpf.Ui.Controls.Button? PlayButton { get; set; }
+        public Wpf.Ui.Controls.Button? RepeatButton { get; set; }
+        public Slider? PositionSlider { get; set; }
 
         private Windows.Media.Playback.MediaPlayer? _smtcMediaPlayer;
         private SystemMediaTransportControls? _smtc;

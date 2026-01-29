@@ -3,6 +3,9 @@ using CommunityToolkit.Mvvm.Input;
 using LibVLCSharp.Shared;
 using Mercury.Services;
 using Mercury.Views.Pages;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using System.Windows;
 using Wpf.Ui;
 using Wpf.Ui.Appearance;
 using Wpf.Ui.Controls;
@@ -27,6 +30,7 @@ namespace Mercury
             // Store the media buttons for later use
             playerService.PlayButton = MediaPlayButton;
             playerService.RepeatButton = MediaContinueButton;
+            playerService.PositionSlider = PosSlider;
 
             SystemThemeWatcher.Watch(this);
         }
@@ -37,6 +41,8 @@ namespace Mercury
         private readonly ISearchService _searchService;
         private INavigationService? _navigationService;
         private IMediaPlayerService _playerService;
+
+        public bool isSliderDragging { get; set; } = false;
 
         [ObservableProperty]
         private string _searchText = string.Empty;
@@ -49,6 +55,20 @@ namespace Mercury
             _searchService = searchService;
             _navigationService = navigationService;
             _playerService = playerService;
+
+            _playerService.MediaPlayer.PositionChanged += MediaPlayer_PositionChanged;
+        }
+
+        private void MediaPlayer_PositionChanged(object? sender, MediaPlayerPositionChangedEventArgs e)
+        {
+            if (!isSliderDragging)
+            {
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    var sliderPos = e.Position * _playerService.PositionSlider!.Maximum;
+                    _playerService.PositionSlider.Value = sliderPos;
+                });
+            }
         }
 
         [RelayCommand]
