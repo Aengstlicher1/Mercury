@@ -26,6 +26,7 @@ namespace Mercury
 
             // Store the media buttons for later use
             playerService.PlayButton = MediaPlayButton;
+            playerService.RepeatButton = MediaContinueButton;
 
             SystemThemeWatcher.Watch(this);
         }
@@ -68,8 +69,30 @@ namespace Mercury
 
         [RelayCommand]
         private void PlayPrevious() => _playerService.PreviousSong();
+
         [RelayCommand]
         private void PlayNext() => _playerService.NextSong();
+
+        [RelayCommand]
+        private void SwtichRepeat()
+        {
+            var Icon = (_playerService.RepeatButton!.Icon as SymbolIcon)!;
+            if (_playerService.RepeatingState == MediaPlayerService.RepeatState.RepeatSingle)
+            {
+                Icon.Symbol = SymbolRegular.ArrowRepeatAll24;
+                _playerService.RepeatingState = MediaPlayerService.RepeatState.RepeatAll;
+            }
+            else if (_playerService.RepeatingState == MediaPlayerService.RepeatState.RepeatAll)
+            {
+                Icon.Symbol = SymbolRegular.ArrowRepeatAllOff24;
+                _playerService.RepeatingState = MediaPlayerService.RepeatState.NoRepeat;
+            }
+            else if (_playerService.RepeatingState == MediaPlayerService.RepeatState.NoRepeat)
+            {
+                Icon.Symbol = SymbolRegular.ArrowRepeat124;
+                _playerService.RepeatingState = MediaPlayerService.RepeatState.RepeatSingle;
+            }
+        }
 
         partial void OnSearchTextChanged(string value)
         {

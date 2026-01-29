@@ -28,7 +28,7 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
-            <RowDefinition Height="64" />
+            <RowDefinition Height="76" />
         </Grid.RowDefinitions>
 
         <ui:TitleBar
@@ -130,6 +130,19 @@
                         BorderThickness="0"
                         Command="{Binding PlayPreviousCommand}"
                         Icon="{ui:SymbolIcon Symbol=Previous24,
+                                             FontSize=24}" />
+                    <ui:Button
+                        Grid.Column="0"
+                        Name="MediaContinueButton"
+                        Width="{Binding ActualHeight, RelativeSource={RelativeSource Self}}"
+                        Margin="6"
+                        Padding="0"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Stretch"
+                        Appearance="Secondary"
+                        BorderThickness="0"
+                        Command="{Binding SwtichRepeatCommand}"
+                        Icon="{ui:SymbolIcon Symbol=ArrowRepeat124,
                                              FontSize=24}" />
                     <ui:Button
                         Grid.Column="3"

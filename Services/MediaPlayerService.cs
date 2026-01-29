@@ -5,12 +5,11 @@ using LibVLCSharp.Shared;
 using Mercury.Models;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using Windows.Foundation.Diagnostics;
 using Windows.Media;
 using Windows.Storage.Streams;
-using Windows.UI.Text;
 using Wpf.Ui.Controls;
 using YouTubeApi;
+using static Mercury.Services.MediaPlayerService;
 
 namespace Mercury.Services
 {
@@ -19,6 +18,7 @@ namespace Mercury.Services
         MediaPlayer MediaPlayer { get; }
         LibVLC LibVLC { get; }
         Song? CurrentSong { get; set; }
+        RepeatState RepeatingState { get; set; }
         ObservableCollection<Song> Queue { get; }
         void UpdateNowPlaying(string title, string artist, string? album = null, string? thumbnailUrl = null);
 
@@ -29,7 +29,8 @@ namespace Mercury.Services
         void PreviousSong();
         void NextSong();
 
-        Wpf.Ui.Controls.Button? PlayButton { get; set; }
+        Button? PlayButton { get; set; }
+        Button? RepeatButton { get; set; }
     }
 
     public partial class MediaPlayerService : ObservableObject, IMediaPlayerService
@@ -39,9 +40,19 @@ namespace Mercury.Services
 
         [ObservableProperty]
         private Song? _currentSong;
+
+        [ObservableProperty]
+        private RepeatState _repeatingState = RepeatState.RepeatSingle;
+        public enum RepeatState
+        {
+            NoRepeat = 0,
+            RepeatSingle = 1,
+            RepeatAll = 2,
+        }
         public ObservableCollection<Song> Queue { get; } = new();
 
-        public Wpf.Ui.Controls.Button? PlayButton { get; set; }
+        public Button? PlayButton { get; set; }
+        public Button? RepeatButton { get; set; }
 
         private Windows.Media.Playback.MediaPlayer? _smtcMediaPlayer;
         private SystemMediaTransportControls? _smtc;
@@ -67,10 +78,27 @@ namespace Mercury.Services
                 UpdateSMTCPlaybackStatus(MediaPlaybackStatus.Stopped);
                 WeakReferenceMessenger.Default.Send(new MediaPlayerStateChangedMessage(MediaPlaybackStatus.Stopped));
             };
-            MediaPlayer.EndReached += (s, e) => 
+            MediaPlayer.EndReached += async (s, e) => 
             {
                 UpdateSMTCPlaybackStatus(MediaPlaybackStatus.Stopped);
                 WeakReferenceMessenger.Default.Send(new MediaPlayerStateChangedMessage(MediaPlaybackStatus.Stopped));
+
+                if (RepeatingState == RepeatState.RepeatSingle)
+                {
+                    Thread.Sleep(500);
+                    MediaPlayer.SeekTo(TimeSpan.Zero);
+                }
+                else if (RepeatingState == RepeatState.RepeatAll)
+                {
+                    if (CurrentSong != null && Queue.Contains(CurrentSong))
+                    {
+                        if (Queue.IndexOf(CurrentSong) == Queue.Count - 1)
+                        {
+                            Thread.Sleep(500);
+                            await SetSong(Queue.First());
+                        }
+                    }
+                }
             };
         }
 
