@@ -106,9 +106,11 @@
                     VerticalAlignment="Top"
                     IsTabStop="False"
                     LargeChange="0"
-                    Maximum="100"
+                    Maximum="1"
                     Minimum="0"
-                    Value="{Binding SongProgress, Mode=TwoWay}" />
+                    Value="{Binding SongProgress, Mode=TwoWay}"
+                    Thumb.DragStarted="PosSlider_DragStarted"
+                    Thumb.DragCompleted="PosSlider_DragCompleted" />
                 <Grid Grid.Row="1" Grid.Column="1">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />

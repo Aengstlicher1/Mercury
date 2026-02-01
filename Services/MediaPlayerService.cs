@@ -32,7 +32,6 @@ namespace Mercury.Services
 
         Wpf.Ui.Controls.Button? PlayButton { get; set; }
         Wpf.Ui.Controls.Button? RepeatButton { get; set; }
-        Slider? PositionSlider { get; set; }
     }
 
     public partial class MediaPlayerService : ObservableObject, IMediaPlayerService
@@ -88,8 +87,11 @@ namespace Mercury.Services
 
                 if (RepeatingState == RepeatState.RepeatSingle)
                 {
-                    Thread.Sleep(500);
-                    MediaPlayer.SeekTo(TimeSpan.Zero);
+                    ThreadPool.QueueUserWorkItem(_ =>
+                    {
+                        MediaPlayer.Stop(); // properly stops the mediaplayer
+                        MediaPlayer.Play(); // reinitializes the media and starts playing
+                    });
                 }
                 else if (RepeatingState == RepeatState.RepeatAll)
                 {

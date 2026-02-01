@@ -1,11 +1,13 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LibVLCSharp.Shared;
+using Markdig.Extensions.Tables;
 using Mercury.Services;
 using Mercury.Views.Pages;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Windows;
+using System.Windows.Media.Converters;
 using Wpf.Ui;
 using Wpf.Ui.Appearance;
 using Wpf.Ui.Controls;
@@ -30,9 +32,18 @@ namespace Mercury
             // Store the media buttons for later use
             playerService.PlayButton = MediaPlayButton;
             playerService.RepeatButton = MediaContinueButton;
-            playerService.PositionSlider = PosSlider;
 
             SystemThemeWatcher.Watch(this);
+        }
+
+        private void PosSlider_DragStarted(object sender, System.Windows.Controls.Primitives.DragStartedEventArgs e)
+        {
+            if (DataContext is MainWindowModel vm) vm.StartScrubbing();
+        }
+
+        private void PosSlider_DragCompleted(object sender, System.Windows.Controls.Primitives.DragCompletedEventArgs e)
+        {
+            if (DataContext is MainWindowModel vm) vm.StopScrubbing();
         }
     }
 
@@ -42,13 +53,13 @@ namespace Mercury
         private INavigationService? _navigationService;
         private IMediaPlayerService _playerService;
 
-        public bool isSliderDragging { get; set; } = false;
+        private bool _isUserDragging = false;
 
         [ObservableProperty]
         private string _searchText = string.Empty;
 
         [ObservableProperty]
-        private double _songProgress = 0d;
+        private float _songProgress = 0f;
 
         public MainWindowModel(ISearchService searchService, INavigationService navigationService, IMediaPlayerService playerService)
         {
@@ -61,14 +72,26 @@ namespace Mercury
 
         private void MediaPlayer_PositionChanged(object? sender, MediaPlayerPositionChangedEventArgs e)
         {
-            if (!isSliderDragging)
+            SongProgress = e.Position;
+        }
+
+        partial void OnSongProgressChanged(float value)
+        {
+            if (_isUserDragging)
             {
-                Application.Current.Dispatcher.Invoke(() =>
-                {
-                    var sliderPos = e.Position * _playerService.PositionSlider!.Maximum;
-                    _playerService.PositionSlider.Value = sliderPos;
-                });
+                _playerService.MediaPlayer.Position = (float)value;
             }
+        }
+
+        public void StartScrubbing() 
+        { 
+            _isUserDragging = true;
+            _playerService.PauseSong();
+        }
+        public void StopScrubbing() 
+        { 
+            _isUserDragging = false;
+            _playerService.StartSong();
         }
 
         [RelayCommand]
