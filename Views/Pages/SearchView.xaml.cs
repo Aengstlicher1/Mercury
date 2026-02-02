@@ -4,8 +4,12 @@ using Mercury.Models;
 using Mercury.Services;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Threading;
+using Windows.Media.Protection.PlayReady;
 using Wpf.Ui;
+using YouTubeApi;
 
 namespace Mercury.Views.Pages
 {
@@ -22,13 +26,14 @@ namespace Mercury.Views.Pages
     {
         private readonly ISearchService _searchService;
         private INavigationService _navigationService;
-        private IAppService _appService;
         private IMediaPlayerService _playerService;
 
         private CancellationTokenSource? _searchCts;
 
         [ObservableProperty]
-        private ObservableCollection<Song> _searchResults = new();
+        private ObservableCollection<Song> _songSearchResults = new();
+        [ObservableProperty]
+        private ObservableCollection<Playlist> _playlistSearchResults = new();
 
         [ObservableProperty]
         private string? _searchQuery = string.Empty;
@@ -37,23 +42,13 @@ namespace Mercury.Views.Pages
         {
             _navigationService = navigationService;
             _searchService = searchService;
-            _appService = appService;
             _playerService = playerService;
 
             _searchService.SearchQueryChanged += OnSearchQueryChanged;
-
-            // Inititalize the search
-            SearchQuery = _searchService.SearchQuery;
-            _ = PerformSearchAsync(SearchQuery!);
         }
 
         [RelayCommand]
-        private async Task PlaySong(Song song)
-        {
-            _ = _playerService.SetSong(song);
-
-            Debug.WriteLine($"Now playing: {song!.ToString()}");
-        }
+        private async Task PlaySong(Song song) => _ = _playerService.SetSong(song);
 
         [RelayCommand]
         private void EnterSongView(Song song)
@@ -65,7 +60,7 @@ namespace Mercury.Views.Pages
         private void OnSearchQueryChanged(object? sender, string query)
         {
             SearchQuery = query;
-            _ = PerformSearchAsync(SearchQuery);
+            Task.Run(() => PerformSearchAsync(SearchQuery));
         }
 
         private async Task PerformSearchAsync(string query)
@@ -80,23 +75,45 @@ namespace Mercury.Views.Pages
             {
                 await Task.Delay(100, token);
 
-                // check for empty query
-                if (string.IsNullOrWhiteSpace(query))
-                {
-                    SearchResults.Clear();
-                    _playerService.Queue.Clear();
-                    return;
-                }
+                List<Song> songResults = new();
+                List<Playlist> playlistResults = new();
 
-                var results = await SongTools.GetSongs(query);
+                if (_searchService.Filter is YouTubeApi.YouTube.MusicSearchFilter.Songs)
+                {
+                    songResults = await SongTools.SearchSongs(query, 2);
+                }
+                else if (_searchService.Filter is YouTubeApi.YouTube.MusicSearchFilter.CommunityPlaylists)
+                {
+                    playlistResults = await PlaylistTools.SearchPlaylists(query, 2);
+                }
 
                 if (!token.IsCancellationRequested)
                 {
-                    foreach (var item in results)
+                    // empty old results
+                    Application.Current.Dispatcher.Invoke(()=>
                     {
-                        SearchResults.Add(item);
-                        _playerService.Queue.Add(item);
-                        await Task.Delay(25);
+                        SongSearchResults.Clear();
+                        PlaylistSearchResults.Clear();
+                        _playerService.Queue.Clear();
+                    });
+                    
+
+                    foreach (var item in songResults)
+                    {
+                        Application.Current.Dispatcher.Invoke(()=>
+                        {
+                            SongSearchResults.Add(item);
+                            _playerService.Queue.Add(item);
+                        });
+                        await Task.Delay(20, token);
+                    }
+                    foreach (var item in playlistResults)
+                    {
+                        Application.Current.Dispatcher.Invoke(()=>
+                        {
+                            PlaylistSearchResults.Add(item);
+                        });
+                        await Task.Delay(20, token);
                     }
                 }
             }

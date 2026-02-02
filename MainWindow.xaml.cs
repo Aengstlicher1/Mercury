@@ -1,13 +1,11 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using LibVLCSharp.Shared;
-using Markdig.Extensions.Tables;
+using Mercury.Models;
 using Mercury.Services;
 using Mercury.Views.Pages;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using System.Windows;
-using System.Windows.Media.Converters;
 using Wpf.Ui;
 using Wpf.Ui.Appearance;
 using Wpf.Ui.Controls;
@@ -29,10 +27,6 @@ namespace Mercury
             // Set up Vlc MediaPlayer and its service
             VideoView.MediaPlayer = playerService.MediaPlayer;
 
-            // Store the media buttons for later use
-            playerService.PlayButton = MediaPlayButton;
-            playerService.RepeatButton = MediaContinueButton;
-
             SystemThemeWatcher.Watch(this);
         }
 
@@ -45,9 +39,14 @@ namespace Mercury
         {
             if (DataContext is MainWindowModel vm) vm.StopScrubbing();
         }
+
+        private void MediaVolumeButton_Click(object sender, RoutedEventArgs e)
+        {
+            VolumePopup.IsOpen = !VolumePopup.IsOpen;
+        }
     }
 
-    public partial class MainWindowModel : ObservableObject
+    public partial class MainWindowModel : ObservableObject, IRecipient<CurrentSongChangedMessage>
     {
         private readonly ISearchService _searchService;
         private INavigationService? _navigationService;
@@ -61,6 +60,47 @@ namespace Mercury
         [ObservableProperty]
         private float _songProgress = 0f;
 
+        public string? CurrentProgress => CurrentSong != null 
+            ? CurrentSong!.Duration.TotalHours >= 1d 
+                ? (CurrentSong.Duration * SongProgress).ToString(@"h\:mm\:ss") ?? "0:00:00"
+                : (CurrentSong.Duration * SongProgress).ToString(@"m\:ss") ?? "0:00"
+            : "0:00";
+
+
+        public int Volume
+        {
+            get => _playerService.Volume;
+            set
+            {
+                if (_playerService.Volume != value)
+                {
+                    _playerService.Volume = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(VolumeIcon));
+                }
+            }
+        }
+
+        public SymbolIcon VolumeIcon
+        {
+            get
+            {
+                if (Volume == 0)
+                    return new SymbolIcon(SymbolRegular.SpeakerMute24, 24);
+                else if (Volume < 33)
+                    return new SymbolIcon(SymbolRegular.Speaker024, 24);
+                else if (Volume < 66)
+                    return new SymbolIcon(SymbolRegular.Speaker124, 24);
+                else 
+                    return new SymbolIcon(SymbolRegular.Speaker224, 24);
+            }
+        }
+
+        public SymbolIcon PlayButtonIcon => _playerService.PlayButtonIcon;
+        public SymbolIcon RepeatButtonIcon => _playerService.RepeatButtonIcon;
+        [ObservableProperty]
+        private Song? _currentSong;
+
         public MainWindowModel(ISearchService searchService, INavigationService navigationService, IMediaPlayerService playerService)
         {
             _searchService = searchService;
@@ -68,6 +108,7 @@ namespace Mercury
             _playerService = playerService;
 
             _playerService.MediaPlayer.PositionChanged += MediaPlayer_PositionChanged;
+            WeakReferenceMessenger.Default.Register<CurrentSongChangedMessage>(this);
         }
 
         private void MediaPlayer_PositionChanged(object? sender, MediaPlayerPositionChangedEventArgs e)
@@ -77,6 +118,7 @@ namespace Mercury
 
         partial void OnSongProgressChanged(float value)
         {
+            OnPropertyChanged(nameof(CurrentProgress));
             if (_isUserDragging)
             {
                 _playerService.MediaPlayer.Position = (float)value;
@@ -119,7 +161,7 @@ namespace Mercury
         [RelayCommand]
         private void SwtichRepeat()
         {
-            var Icon = (_playerService.RepeatButton!.Icon as SymbolIcon)!;
+            var Icon = _playerService.RepeatButtonIcon;
             if (_playerService.RepeatingState == MediaPlayerService.RepeatState.RepeatSingle)
             {
                 Icon.Symbol = SymbolRegular.ArrowRepeatAll24;
@@ -147,6 +189,14 @@ namespace Mercury
             {
                 _navigationService?.Navigate(typeof(SearchView));
             }
+        }
+
+
+
+        public void Receive(CurrentSongChangedMessage message)
+        {
+            // Update the local property, which triggers the UI
+            CurrentSong = message.Value;
         }
     }
 }

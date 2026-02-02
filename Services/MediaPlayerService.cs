@@ -5,8 +5,15 @@ using LibVLCSharp.Shared;
 using Mercury.Models;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Windows.Controls;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.IO;
+using System.Net.Http;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Threading;
 using Windows.Media;
+using Windows.Storage;
 using Windows.Storage.Streams;
 using Wpf.Ui.Controls;
 using YouTubeApi;
@@ -23,6 +30,8 @@ namespace Mercury.Services
         ObservableCollection<Song> Queue { get; }
         void UpdateNowPlaying(string title, string artist, string? album = null, string? thumbnailUrl = null);
 
+        int Volume { get; set; }
+
         Task SetSong(Song song);
         void StartSong();
         void PauseSong();
@@ -30,8 +39,8 @@ namespace Mercury.Services
         void PreviousSong();
         void NextSong();
 
-        Wpf.Ui.Controls.Button? PlayButton { get; set; }
-        Wpf.Ui.Controls.Button? RepeatButton { get; set; }
+        SymbolIcon PlayButtonIcon { get; set;}
+        SymbolIcon RepeatButtonIcon { get; set; }
     }
 
     public partial class MediaPlayerService : ObservableObject, IMediaPlayerService
@@ -43,6 +52,9 @@ namespace Mercury.Services
         private Song? _currentSong;
 
         [ObservableProperty]
+        private int _volume = 50;
+
+        [ObservableProperty]
         private RepeatState _repeatingState = RepeatState.RepeatSingle;
         public enum RepeatState
         {
@@ -52,16 +64,17 @@ namespace Mercury.Services
         }
         public ObservableCollection<Song> Queue { get; } = new();
 
-        public Wpf.Ui.Controls.Button? PlayButton { get; set; }
-        public Wpf.Ui.Controls.Button? RepeatButton { get; set; }
-        public Slider? PositionSlider { get; set; }
+        [ObservableProperty]
+        private SymbolIcon _playButtonIcon = new SymbolIcon(SymbolRegular.Play24, 24);
+        [ObservableProperty]
+        private SymbolIcon _repeatButtonIcon = new SymbolIcon(SymbolRegular.ArrowRepeat124, 24);
 
         private Windows.Media.Playback.MediaPlayer? _smtcMediaPlayer;
         private SystemMediaTransportControls? _smtc;
         public MediaPlayerService()
         {
             MediaPlayer = new MediaPlayer(LibVLC);
-            MediaPlayer.Volume = 50;
+            MediaPlayer.Volume = Volume;
 
             InititalizeSMTC();
 
@@ -107,19 +120,28 @@ namespace Mercury.Services
             };
         }
 
+        partial void OnVolumeChanged(int value)
+        {
+            if (value < 0) value = 0;
+            if (value > 100) value = 100;
+
+            MediaPlayer.Volume = value;
+        }
 
         public async Task SetSong(Song song)
         {
+            _smtc!.IsEnabled = true;
+
             var streams = await YouTube.GetStreamInfo(song.Media.VideoId);  // Get streams
             var streamUri = new Uri(streams[0].Url);                        // make Uri from Stream
             var media = new Media(LibVLC, streamUri);                       // make LibVLC Media from Uri
             MediaPlayer.Play(media);                                        // Set and Play Song
             CurrentSong = song;
-            (PlayButton!.Icon as SymbolIcon)!.Symbol = SymbolRegular.Pause24;
+            PlayButtonIcon.Symbol = SymbolRegular.Pause24;
 
             UpdateNowPlaying(
                 title: song.Title,
-                artist: song.Author,
+                artist: song.Artist,
                 album: song.Album,
                 thumbnailUrl: song.Media.Thumbnails.MediumResUrl
             );
@@ -141,8 +163,8 @@ namespace Mercury.Services
             }
         }
 
-        public void StartSong() { MediaPlayer.Play(); (PlayButton!.Icon as SymbolIcon)!.Symbol = SymbolRegular.Pause24; }
-        public void PauseSong() { MediaPlayer.Pause(); (PlayButton!.Icon as SymbolIcon)!.Symbol = SymbolRegular.Play24;}
+        public void StartSong() { MediaPlayer.Play(); PlayButtonIcon.Symbol = SymbolRegular.Pause24; }
+        public void PauseSong() { MediaPlayer.Pause(); PlayButtonIcon.Symbol = SymbolRegular.Play24; }
         public void StopSong() => MediaPlayer.Stop();
         public void NextSong() => QueueHelper(1);
         public void PreviousSong() => QueueHelper(-1);
@@ -182,7 +204,7 @@ namespace Mercury.Services
             _smtc = _smtcMediaPlayer.SystemMediaTransportControls;
 
             // Enable/Disable buttons
-            _smtc.IsEnabled = true;
+            _smtc.IsEnabled = false;
             _smtc.IsPlayEnabled = true;
             _smtc.IsPauseEnabled = true;
             _smtc.IsStopEnabled = true;
@@ -206,28 +228,29 @@ namespace Mercury.Services
             switch (args.Button)
             {
                 case SystemMediaTransportControlsButton.Play:
-                    StartSong();
+                    Application.Current.Dispatcher.Invoke(StartSong);
                     break;
 
                 case SystemMediaTransportControlsButton.Pause:
-                    PauseSong();
+                    Application.Current.Dispatcher.Invoke(PauseSong);
                     break;
 
                 case SystemMediaTransportControlsButton.Stop:
-                    StopSong();
+                    Application.Current.Dispatcher.Invoke(StopSong);
                     break;
 
                 case SystemMediaTransportControlsButton.Previous:
-                    PreviousSong();
+                    Application.Current.Dispatcher.Invoke(PreviousSong);
                     break;
 
                 case SystemMediaTransportControlsButton.Next:
-                    NextSong();
+                    Application.Current.Dispatcher.Invoke(NextSong);
                     break;
             }
         }
 
-        public void UpdateNowPlaying(string title, string artist, string? album = null, string? thumbnailUrl = null)
+        private HttpClient _httpClient = new ();
+        public async void UpdateNowPlaying(string title, string artist, string? album = null, string? thumbnailUrl = null)
         {
             var updater = _smtc!.DisplayUpdater;
 
@@ -241,12 +264,88 @@ namespace Mercury.Services
             {
                 try
                 {
-                    updater.Thumbnail = RandomAccessStreamReference.CreateFromUri(new Uri(thumbnailUrl));
+                    var localPath = await DownloadThumbnailAsync(thumbnailUrl);
+                    if (!string.IsNullOrEmpty(localPath))
+                    {
+                        var file = await StorageFile.GetFileFromPathAsync(localPath);
+                        updater.Thumbnail = RandomAccessStreamReference.CreateFromFile(file);
+                    }
                 }
                 catch { }
             }
 
             updater.Update();
+        }
+
+        private async Task<string?> DownloadThumbnailAsync(string url)
+        {
+            try
+            {
+                var tempPath = Path.Combine(Path.GetTempPath(), "Mercury", "Thumbnails");
+                Directory.CreateDirectory(tempPath);
+
+                var fileName = $"{Math.Abs(url.GetHashCode())}.jpg";
+                var localPath = Path.Combine(tempPath, fileName);
+
+                if (!File.Exists(localPath))
+                {
+                    var imageBytes = await _httpClient.GetByteArrayAsync(url);
+
+                    var croppedBytes = CropImageToSquare(imageBytes);
+
+                    await File.WriteAllBytesAsync(localPath, croppedBytes);
+                }
+
+                return localPath;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to download thumbnail: {ex.Message}");
+                return null;
+            }
+        }
+
+        private byte[] CropImageToSquare(byte[] imageBytes)
+        {
+            try
+            {
+                using var ms = new MemoryStream(imageBytes);
+                using var originalImage = System.Drawing.Image.FromStream(ms);
+         
+                // Calculate square crop dimensions (center crop)
+                int size = Math.Min(originalImage.Width, originalImage.Height);
+                int x = (originalImage.Width - size) / 2;
+                int y = (originalImage.Height - size) / 2;
+         
+                // Create cropped bitmap
+                using var croppedBitmap = new Bitmap(size, size);
+                using var graphics = Graphics.FromImage(croppedBitmap);
+             
+                // Set high quality rendering
+                graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
+                graphics.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+                graphics.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
+         
+                // Draw cropped portion
+                graphics.DrawImage(
+                    originalImage,
+                    new Rectangle(0, 0, size, size),
+                    new Rectangle(x, y, size, size),
+                    GraphicsUnit.Pixel
+                );
+         
+                // Save to memory stream
+                using var outputStream = new MemoryStream();
+                croppedBitmap.Save(outputStream, ImageFormat.Jpeg);
+                return outputStream.ToArray();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to crop image: {ex.Message}");
+                // Return original if cropping fails
+                return imageBytes;
+            }
         }
 
         private void UpdateSMTCPlaybackStatus(MediaPlaybackStatus status)

@@ -8,7 +8,7 @@ namespace Mercury.Models
         public required YouTube.Video Media { get; set; }
 
         public string Title => Media.Title;
-        public string Author => Media.Author.Split('•').First();
+        public string Artist => Media.Author.Split('•').First();
         public string Url => Media.Url;
         public string Album => Media.Author.Split('•').Last();
         public TimeSpan Duration => Media.Duration;
@@ -18,21 +18,34 @@ namespace Mercury.Models
 
         public override string ToString()
         {
-            return $"{Title} - {Album} - {Author}";
+            return $"{Title} - {Album} - {Artist}";
         }
     }
 
 
     public static class SongTools
     {
-        public static async Task<List<Song>> GetSongs(string query)
+        public static async Task<List<Song>> SearchSongs(string query, int pages = 1)
         {
             var videos = await YouTube.SearchYouTubeMusic(query, YouTube.MusicSearchFilter.Songs);
-            List<Song> songs = videos.CurrentPage.ContentItems
+            List<Song> songs;
+
+            songs = videos.CurrentPage.ContentItems
                 .Where(c => c.Content is YouTube.Video)
                 .Select(v => v.Content as YouTube.Video)
                 .Select(s => new Song() { Media = s! })
                 .ToList();
+
+            for (int i = 1; i < pages; i++)
+            {
+                var nextResults = await videos.GetNextPage();
+                songs.AddRange(nextResults.ContentItems
+                    .Where(c => c.Content is YouTube.Video)
+                    .Select(v => v.Content as YouTube.Video)
+                    .Select(s => new Song() { Media = s! })
+                    .ToList());
+            }
+            
             return songs;
         }
 

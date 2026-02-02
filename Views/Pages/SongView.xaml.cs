@@ -22,7 +22,6 @@ namespace Mercury.Views.Pages
     public partial class SongViewModel : ObservableObject, IRecipient<CurrentSongChangedMessage>
     {
         private readonly INavigationService _navigationService;
-        private readonly IAppService _appService;
         private readonly IMediaPlayerService _mediaPlayerService;
 
         [ObservableProperty]
@@ -34,12 +33,12 @@ namespace Mercury.Views.Pages
         public SongViewModel(INavigationService navigationService, IAppService appService, IMediaPlayerService mediaPlayerService)
         {
             _navigationService = navigationService;
-            _appService = appService;
             _mediaPlayerService = mediaPlayerService;
             _mediaPlayer = mediaPlayerService.MediaPlayer;
 
             WeakReferenceMessenger.Default.Register<CurrentSongChangedMessage>(this);
             _currentSong = _mediaPlayerService.CurrentSong;
+            
         }
 
         public void Receive(CurrentSongChangedMessage message)

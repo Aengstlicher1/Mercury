@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Windows.Controls;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using YouTubeApi;
 
 namespace Mercury.Services
 {
@@ -9,9 +7,10 @@ namespace Mercury.Services
     {
         string? SearchQuery { get; set; }
         event EventHandler<string> SearchQueryChanged; 
+        YouTube.MusicSearchFilter Filter { get; set;}
     }
 
-    public class SearchService : ISearchService
+    public partial class SearchService : ObservableObject, ISearchService
     {
         private string? _searchQuery;
         public string? SearchQuery
@@ -26,6 +25,8 @@ namespace Mercury.Services
                 }
             }
         }
+        [ObservableProperty]
+        private YouTube.MusicSearchFilter _filter = YouTube.MusicSearchFilter.Songs;
 
         public event EventHandler<string>? SearchQueryChanged;
     }

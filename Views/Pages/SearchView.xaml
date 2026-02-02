@@ -15,10 +15,10 @@
 
     <Grid>
         <ItemsControl
-            Name="UsersList"
+            Name="SongList"
             Grid.Row="1"
             Margin="0,4"
-            ItemsSource="{Binding SearchResults}"
+            ItemsSource="{Binding SongSearchResults}"
             VirtualizingPanel.IsVirtualizing="True"
             VirtualizingPanel.VirtualizationMode="Recycling">
             <ItemsControl.ItemTemplate>
@@ -71,7 +71,7 @@
                                         <TextBlock.Text>
                                             <MultiBinding StringFormat="{}{0} • {1} • {2}">
                                                 <Binding FallbackValue="Type" Path="Type" />
-                                                <Binding FallbackValue="Author" Path="Author" />
+                                                <Binding FallbackValue="Artist" Path="Artist" />
                                                 <Binding FallbackValue="Album" Path="Album" />
                                             </MultiBinding>
                                         </TextBlock.Text>
@@ -89,6 +89,76 @@
                                     VerticalAlignment="Center"
                                     Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                     Text="{Binding FormatedDurarion}" />
+                            </StackPanel>
+                        </Grid>
+                    </ui:Button>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <ItemsControl
+            Name="PlalistList"
+            Grid.Row="1"
+            Margin="0,4"
+            ItemsSource="{Binding PlaylistSearchResults}"
+            VirtualizingPanel.IsVirtualizing="True"
+            VirtualizingPanel.VirtualizationMode="Recycling">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="models:Playlist">
+                    <ui:Button
+                        Height="60"
+                        Margin="8,4"
+                        Padding="0"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Stretch">
+                        <Grid HorizontalAlignment="Stretch">
+                            <StackPanel
+                                HorizontalAlignment="Left"
+                                Orientation="Horizontal"
+                                Tag="Left">
+                                <Border
+                                    Width="48"
+                                    Height="48"
+                                    Margin="4,4"
+                                    ClipToBounds="True"
+                                    CornerRadius="6">
+                                    <Border.Background>
+                                        <ImageBrush
+                                            ImageSource="{Binding Media.Thumbnails.MediumResUrl}"
+                                            RenderOptions.BitmapScalingMode="HighQuality"
+                                            Stretch="UniformToFill" />
+                                    </Border.Background>
+                                </Border>
+                                <Grid Margin="2,0,0,0">
+                                    <TextBlock
+                                        Margin="0,2,0,0"
+                                        VerticalAlignment="Top"
+                                        Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                                        Text="{Binding Title}" />
+                                    <TextBlock
+                                        Margin="0,0,0,2"
+                                        VerticalAlignment="Bottom"
+                                        Foreground="{DynamicResource TextFillColorTertiaryBrush}">
+                                        <TextBlock.Text>
+                                            <MultiBinding StringFormat="{}{0} • {1} • {2}">
+                                                <Binding FallbackValue="Type" Path="Type" />
+                                                <Binding FallbackValue="Artist" Path="Artist" />
+                                                <Binding FallbackValue="Album" Path="Album" />
+                                            </MultiBinding>
+                                        </TextBlock.Text>
+                                    </TextBlock>
+                                </Grid>
+                            </StackPanel>
+
+                            <StackPanel
+                                HorizontalAlignment="Right"
+                                Orientation="Horizontal"
+                                Tag="Right">
+                                <TextBlock
+                                    Margin="0,0,8,0"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Center"
+                                    Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                    Text="{Binding Media.VideoCount}" />
                             </StackPanel>
                         </Grid>
                     </ui:Button>

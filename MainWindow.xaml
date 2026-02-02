@@ -83,7 +83,7 @@
         <Border
             Name="HudBorder"
             Grid.Row="1"
-            Background="{DynamicResource ApplicationBackgroundBrush}"
+            Background="{DynamicResource ControlFillColorTertiaryBrush}"
             BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
             BorderThickness="2,2,2,0"
             CornerRadius="6,6,0,0">
@@ -98,19 +98,74 @@
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
-                <Slider
-                    Name="PosSlider"
-                    Margin="0,4,0,0"
+                <Grid Grid.RowSpan="2" Grid.Column="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Border
+                        Grid.Column="0"
+                        Width="{Binding ActualHeight, RelativeSource={RelativeSource Self}}"
+                        Margin="8"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Stretch"
+                        BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                        BorderThickness="2"
+                        ClipToBounds="True"
+                        CornerRadius="6">
+                        <Border.Background>
+                            <ImageBrush
+                                ImageSource="{Binding CurrentSong.Media.Thumbnails.MediumResUrl}"
+                                RenderOptions.BitmapScalingMode="HighQuality"
+                                Stretch="UniformToFill" />
+                        </Border.Background>
+                    </Border>
+
+                    <StackPanel Grid.Column="1">
+                        <TextBlock
+                            Text="{Binding CurrentSong.Title, FallbackValue=Title}"
+                            Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                            Margin="4,4,4,0"
+                            FontSize="16"/>
+                        <TextBlock
+                            Text="{Binding CurrentSong.Artist, FallbackValue=Artist}"
+                            Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                            Margin="4,0"
+                            FontSize="14"/>
+                    </StackPanel>
+                </Grid>
+
+                <Grid
                     Grid.Row="0"
                     Grid.Column="1"
-                    VerticalAlignment="Top"
-                    IsTabStop="False"
-                    LargeChange="0"
-                    Maximum="1"
-                    Minimum="0"
-                    Value="{Binding SongProgress, Mode=TwoWay}"
-                    Thumb.DragStarted="PosSlider_DragStarted"
-                    Thumb.DragCompleted="PosSlider_DragCompleted" />
+                    Margin="6,4,6,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock
+                        Grid.Column="0"
+                        VerticalAlignment="Center"
+                        Text="{Binding CurrentProgress, FallbackValue=0:00}" />
+                    <Slider
+                        Name="PosSlider"
+                        Grid.Column="1"
+                        Margin="4,0,4,0"
+                        VerticalAlignment="Top"
+                        IsTabStop="False"
+                        LargeChange="0"
+                        Maximum="1"
+                        Minimum="0"
+                        Thumb.DragCompleted="PosSlider_DragCompleted"
+                        Thumb.DragStarted="PosSlider_DragStarted"
+                        Value="{Binding SongProgress, Mode=TwoWay}" />
+                    <TextBlock
+                        Grid.Column="2"
+                        VerticalAlignment="Center"
+                        Text="{Binding CurrentSong.FormatedDurarion, FallbackValue=0:00}" />
+                </Grid>
+
                 <Grid Grid.Row="1" Grid.Column="1">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
@@ -119,59 +174,129 @@
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
                     <ui:Button
-                        Grid.Column="2"
-                        Name="MediaPreviousButton"
+                        Name="MediaContinueButton"
+                        Grid.Column="0"
                         Width="{Binding ActualHeight, RelativeSource={RelativeSource Self}}"
                         Margin="6"
                         Padding="0"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Stretch"
                         Appearance="Secondary"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Command="{Binding SwtichRepeatCommand}"
+                        Icon="{Binding RepeatButtonIcon, FallbackValue={ui:SymbolIcon Symbol=ArrowRepeat124, FontSize=24}}"
+                        MouseOverBackground="{DynamicResource SubtleFillColorTertiaryBrush}"
+                        PressedForeground="{DynamicResource TextFillColorPrimaryBrush}" />
+                    <ui:Button
+                        Name="MediaPreviousButton"
+                        Grid.Column="2"
+                        Width="{Binding ActualHeight, RelativeSource={RelativeSource Self}}"
+                        Margin="6"
+                        Padding="0"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Stretch"
+                        Appearance="Secondary"
+                        Background="Transparent"
                         BorderThickness="0"
                         Command="{Binding PlayPreviousCommand}"
                         Icon="{ui:SymbolIcon Symbol=Previous24,
-                                             FontSize=24}" />
+                                             FontSize=24}"
+                        MouseOverBackground="{DynamicResource SubtleFillColorTertiaryBrush}"
+                        PressedForeground="{DynamicResource TextFillColorPrimaryBrush}" />
                     <ui:Button
-                        Grid.Column="0"
-                        Name="MediaContinueButton"
-                        Width="{Binding ActualHeight, RelativeSource={RelativeSource Self}}"
-                        Margin="6"
-                        Padding="0"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Stretch"
-                        Appearance="Secondary"
-                        BorderThickness="0"
-                        Command="{Binding SwtichRepeatCommand}"
-                        Icon="{ui:SymbolIcon Symbol=ArrowRepeat124,
-                                             FontSize=24}" />
-                    <ui:Button
-                        Grid.Column="3"
                         Name="MediaPlayButton"
+                        Grid.Column="3"
                         Width="{Binding ActualHeight, RelativeSource={RelativeSource Self}}"
                         Margin="6"
                         Padding="0"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Stretch"
                         Appearance="Secondary"
+                        Background="Transparent"
                         BorderThickness="0"
                         Command="{Binding TogglePlayCommand}"
-                        Icon="{ui:SymbolIcon Symbol=Play24,
-                                             FontSize=24}" />
+                        Icon="{Binding PlayButtonIcon, FallbackValue={ui:SymbolIcon Symbol=Play24, FontSize=24}}"
+                        MouseOverBackground="{DynamicResource SubtleFillColorTertiaryBrush}"
+                        PressedForeground="{DynamicResource TextFillColorPrimaryBrush}" />
                     <ui:Button
-                        Grid.Column="4"
                         Name="MediaNextButton"
+                        Grid.Column="4"
                         Width="{Binding ActualHeight, RelativeSource={RelativeSource Self}}"
                         Margin="6"
                         Padding="0"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Stretch"
+                        Background="Transparent"
                         BorderThickness="0"
                         Command="{Binding PlayNextCommand}"
                         Icon="{ui:SymbolIcon Symbol=Next24,
-                                             FontSize=24}" />
+                                             FontSize=24}"
+                        MouseOverBackground="{DynamicResource SubtleFillColorTertiaryBrush}"
+                        PressedForeground="{DynamicResource TextFillColorPrimaryBrush}" />
+                    <ui:Button
+                        Name="MediaVolumeButton"
+                        Grid.Column="6"
+                        Width="{Binding ActualHeight, RelativeSource={RelativeSource Self}}"
+                        Margin="6"
+                        Padding="0"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Stretch"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Click="MediaVolumeButton_Click"
+                        Icon="{Binding VolumeIcon, FallbackValue={ui:SymbolIcon Symbol=Speaker024, FontSize=24}}"
+                        MouseOverBackground="{DynamicResource SubtleFillColorTertiaryBrush}"
+                        PressedForeground="{DynamicResource TextFillColorPrimaryBrush}" />
+
+                    <Popup
+                        Name="VolumePopup"
+                        Grid.Column="6"
+                        AllowsTransparency="True"
+                        Placement="Top"
+                        PlacementTarget="{Binding ElementName=MediaVolumeButton}"
+                        PopupAnimation="Slide"
+                        StaysOpen="False">
+                        <Border
+                            Margin="0,0,0,8"
+                            Padding="16"
+                            Background="{DynamicResource ApplicationBackgroundBrush}"
+                            BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                            BorderThickness="1"
+                            CornerRadius="8">
+                            <Border.Effect>
+                                <DropShadowEffect
+                                    BlurRadius="12"
+                                    Opacity="0.1"
+                                    RenderingBias="Quality"
+                                    ShadowDepth="2"
+                                    Color="Black" />
+                            </Border.Effect>
+                            <StackPanel Orientation="Horizontal">
+                                <Slider
+                                    Name="VolumeSlider"
+                                    Width="120"
+                                    Height="20"
+                                    HorizontalAlignment="Center"
+                                    IsSnapToTickEnabled="True"
+                                    Maximum="100"
+                                    Minimum="0"
+                                    TickFrequency="1"
+                                    Value="{Binding Volume, Mode=TwoWay}" />
+                                <TextBlock
+                                    MinWidth="40"
+                                    Margin="4,0,0,0"
+                                    VerticalAlignment="Center"
+                                    FontWeight="SemiBold"
+                                    Text="{Binding Volume, StringFormat={}{0}%}" />
+
+                            </StackPanel>
+                        </Border>
+                    </Popup>
                 </Grid>
             </Grid>
         </Border>
