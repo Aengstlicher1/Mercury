@@ -8,8 +8,11 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:models="clr-namespace:Mercury.Models"
     xmlns:pages="clr-namespace:Mercury.Views.Pages"
+    xmlns:sys="clr-namespace:System;assembly=mscorlib"
+    xmlns:tray="http://schemas.lepo.co/wpfui/2022/xaml/tray"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     xmlns:vlc="clr-namespace:LibVLCSharp.WPF;assembly=LibVLCSharp.WPF"
+    xmlns:youtube="clr-namespace:YouTubeApi;assembly=YouTubeApi"
     Name="Window"
     Title="Mercury"
     Width="800"
@@ -18,6 +21,7 @@
     MinHeight="240"
     ui:Design.Background="{DynamicResource ApplicationBackgroundBrush}"
     ExtendsContentIntoTitleBar="True"
+    PreviewKeyDown="Window_PreviewKeyDown"
     WindowBackdropType="Mica"
     WindowStyle="None"
     mc:Ignorable="d">
@@ -31,6 +35,23 @@
             <RowDefinition Height="76" />
         </Grid.RowDefinitions>
 
+        <tray:NotifyIcon Icon="/Assets/Icon.png" MenuFontSize="6">
+            <tray:NotifyIcon.Menu>
+                <ContextMenu>
+                    <ui:MenuItem
+                        Command="{Binding ShowWindowCommand}"
+                        Header="Show Mercury"
+                        Icon="{ui:SymbolIcon Symbol=Add24}" />
+                    <ui:MenuItem
+                        Command="{Binding KillWindowCommand}"
+                        Header="Exit Mercury"
+                        Icon="{ui:SymbolIcon Symbol=Subtract24}" />
+                    <Separator />
+                    <ui:MenuItem Header="Settings" Icon="{ui:SymbolIcon Symbol=Settings24}" />
+                </ContextMenu>
+            </tray:NotifyIcon.Menu>
+        </tray:NotifyIcon>
+
         <ui:TitleBar
             Name="TitleBar"
             Title="Mercury"
@@ -38,20 +59,42 @@
             HorizontalContentAlignment="Stretch"
             CloseWindowByDoubleClickOnIcon="True">
             <ui:TitleBar.Icon>
-                <ui:ImageIcon RenderOptions.BitmapScalingMode="HighQuality" Source="/Assets/Letter.png" />
+                <ui:ImageIcon RenderOptions.BitmapScalingMode="HighQuality" Source="/Assets/Icon.png" />
             </ui:TitleBar.Icon>
             <ui:TitleBar.CenterContent>
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="3*" />
+                        <ColumnDefinition Width="4*" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <ui:TextBox
-                        Grid.Column="1"
-                        VerticalAlignment="Center"
-                        PlaceholderText="Search songs, artist..."
-                        Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <Grid Grid.Column="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <ui:TextBox
+                            Grid.Column="0"
+                            VerticalAlignment="Stretch"
+                            Margin="0,6"
+                            Icon="{ui:SymbolIcon Symbol=Search24, FontSize=16}"
+                            PlaceholderText="Search songs, artist..."
+                            Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            <ui:TextBox.Resources>
+                                <CornerRadius x:Key="ControlCornerRadius">6,0,0,6</CornerRadius>
+                            </ui:TextBox.Resources>
+                        </ui:TextBox>
+                        <ComboBox
+                            Grid.Column="1"
+                            VerticalAlignment="Stretch"
+                            Margin="0,6"
+                            ItemsSource="{Binding SearchFilters}"
+                            SelectedValue="{Binding SearchFilter}">
+                            <ComboBox.Resources>
+                                <CornerRadius x:Key="ControlCornerRadius">0,6,6,0</CornerRadius>
+                            </ComboBox.Resources>
+                        </ComboBox>
+                    </Grid>
                 </Grid>
             </ui:TitleBar.CenterContent>
         </ui:TitleBar>
@@ -123,15 +166,15 @@
 
                     <StackPanel Grid.Column="1">
                         <TextBlock
-                            Text="{Binding CurrentSong.Title, FallbackValue=Title}"
-                            Foreground="{DynamicResource TextFillColorPrimaryBrush}"
                             Margin="4,4,4,0"
-                            FontSize="16"/>
+                            FontSize="16"
+                            Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                            Text="{Binding CurrentSong.Title, FallbackValue=Title}" />
                         <TextBlock
-                            Text="{Binding CurrentSong.Artist, FallbackValue=Artist}"
-                            Foreground="{DynamicResource TextFillColorTertiaryBrush}"
                             Margin="4,0"
-                            FontSize="14"/>
+                            FontSize="14"
+                            Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                            Text="{Binding CurrentSong.Artist, FallbackValue=Artist}" />
                     </StackPanel>
                 </Grid>
 

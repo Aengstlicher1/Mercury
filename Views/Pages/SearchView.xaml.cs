@@ -78,13 +78,13 @@ namespace Mercury.Views.Pages
                 List<Song> songResults = new();
                 List<Playlist> playlistResults = new();
 
-                if (_searchService.Filter is YouTubeApi.YouTube.MusicSearchFilter.Songs)
+                if (_searchService.Filter is YouTube.MusicSearchFilter.Songs)
                 {
                     songResults = await SongTools.SearchSongs(query, 2);
                 }
-                else if (_searchService.Filter is YouTubeApi.YouTube.MusicSearchFilter.CommunityPlaylists)
+                else
                 {
-                    playlistResults = await PlaylistTools.SearchPlaylists(query, 2);
+                    playlistResults = await PlaylistTools.SearchPlaylists(query, _searchService.Filter, 2);
                 }
 
                 if (!token.IsCancellationRequested)
@@ -105,7 +105,7 @@ namespace Mercury.Views.Pages
                             SongSearchResults.Add(item);
                             _playerService.Queue.Add(item);
                         });
-                        await Task.Delay(20, token);
+                        // await Task.Delay(20, token);
                     }
                     foreach (var item in playlistResults)
                     {
@@ -113,7 +113,7 @@ namespace Mercury.Views.Pages
                         {
                             PlaylistSearchResults.Add(item);
                         });
-                        await Task.Delay(20, token);
+                        // await Task.Delay(20, token);
                     }
                 }
             }

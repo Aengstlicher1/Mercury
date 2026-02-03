@@ -25,9 +25,14 @@ namespace Mercury.Services
                 }
             }
         }
+        public event EventHandler<string>? SearchQueryChanged;
+
         [ObservableProperty]
         private YouTube.MusicSearchFilter _filter = YouTube.MusicSearchFilter.Songs;
 
-        public event EventHandler<string>? SearchQueryChanged;
+        partial void OnFilterChanged(YouTube.MusicSearchFilter value)
+        {
+            SearchQueryChanged.Invoke(this, SearchQuery ?? string.Empty);
+        }
     }
 }

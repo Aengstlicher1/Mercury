@@ -5,10 +5,14 @@ using LibVLCSharp.Shared;
 using Mercury.Models;
 using Mercury.Services;
 using Mercury.Views.Pages;
+using System.Diagnostics;
 using System.Windows;
+using System.Windows.Input;
 using Wpf.Ui;
 using Wpf.Ui.Appearance;
 using Wpf.Ui.Controls;
+using YouTubeApi;
+using static YouTubeApi.YouTube;
 
 
 namespace Mercury
@@ -28,6 +32,16 @@ namespace Mercury
             VideoView.MediaPlayer = playerService.MediaPlayer;
 
             SystemThemeWatcher.Watch(this);
+            Focus();
+            Closing += MainWindow_Closing;
+        }
+
+        private void MainWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
+        {
+            // Stop the window from actually closing to keep the Tray Icon
+            e.Cancel = true;
+
+            this.Hide();
         }
 
         private void PosSlider_DragStarted(object sender, System.Windows.Controls.Primitives.DragStartedEventArgs e)
@@ -43,6 +57,22 @@ namespace Mercury
         private void MediaVolumeButton_Click(object sender, RoutedEventArgs e)
         {
             VolumePopup.IsOpen = !VolumePopup.IsOpen;
+        }
+
+        private void Window_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            var focusedElement = FocusManager.GetFocusedElement(this);
+            if (focusedElement is not System.Windows.Controls.TextBox or not Wpf.Ui.Controls.TextBox)
+            {
+                if (e.Key == Key.Space)
+                {
+                    if (DataContext is MainWindowModel vm)
+                    {
+                        vm.TogglePlayCommand.Execute(null);
+                        e.Handled = true;
+                    }
+                }
+            }
         }
     }
 
@@ -96,6 +126,22 @@ namespace Mercury
             }
         }
 
+        public MusicSearchFilter SearchFilter
+        {
+            get => _searchService.Filter;
+            set
+            {
+                if (_searchService.Filter != value)
+                {
+                    _searchService.Filter = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public IEnumerable<MusicSearchFilter> SearchFilters => 
+        Enum.GetValues(typeof(MusicSearchFilter)).Cast<MusicSearchFilter>();
+
         public SymbolIcon PlayButtonIcon => _playerService.PlayButtonIcon;
         public SymbolIcon RepeatButtonIcon => _playerService.RepeatButtonIcon;
         [ObservableProperty]
@@ -135,6 +181,11 @@ namespace Mercury
             _isUserDragging = false;
             _playerService.StartSong();
         }
+
+        [RelayCommand]
+        private void ShowWindow() => (Application.Current.MainWindow).Show();
+        [RelayCommand]
+        private void KillWindow() => Process.GetCurrentProcess().Kill();
 
         [RelayCommand]
         private void TogglePlay()

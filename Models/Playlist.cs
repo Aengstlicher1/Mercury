@@ -4,6 +4,7 @@ namespace Mercury.Models
 {
     public class Playlist
     {
+        public string Type { get; set; } = "Playlist";
         public string? Title => Media.Title;
         public string? Description => Media.Description;
         public string? Artist => Media.Author;
@@ -17,16 +18,27 @@ namespace Mercury.Models
 
     public static class PlaylistTools
     {
-        public static async Task<List<Playlist>> SearchPlaylists(string query, int pages = 1)
+        public static async Task<List<Playlist>> SearchPlaylists(string query, YouTube.MusicSearchFilter filter, int pages = 1)
         {
-            var videos = await YouTube.SearchYouTubeMusic(query, YouTube.MusicSearchFilter.CommunityPlaylists);
+            var videos = await YouTube.SearchYouTubeMusic(query, filter);
             List<Playlist> playlists;
 
-            playlists = videos.CurrentPage.ContentItems
+            if (filter is not YouTube.MusicSearchFilter.Albums)
+            {
+                playlists = videos.CurrentPage.ContentItems
                 .Where(c => c.Content is YouTube.Playlist)
                 .Select(p => p.Content as YouTube.Playlist)
                 .Select(p => new Playlist() { Media = p! })
                 .ToList();
+            }
+            else
+            {
+                playlists = videos.CurrentPage.ContentItems
+                .Where(c => c.Content is YouTube.Playlist)
+                .Select(p => p.Content as YouTube.Playlist)
+                .Select(p => new Playlist() { Media = p!, Type = "Album" })
+                .ToList();
+            }
 
             for (int i = 1; i < pages; i++)
             {

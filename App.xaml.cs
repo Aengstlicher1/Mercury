@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Wpf.Ui;
 using Wpf.Ui.Abstractions;
+using static Mercury.MainWindow;
 
 
 namespace Mercury
