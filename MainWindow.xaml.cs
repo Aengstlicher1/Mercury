@@ -242,12 +242,15 @@ namespace Mercury
             }
         }
 
-
+        [ObservableProperty]
+        private Visibility _currentPlayingVisibility = Visibility.Collapsed;
 
         public void Receive(CurrentSongChangedMessage message)
         {
             // Update the local property, which triggers the UI
             CurrentSong = message.Value;
+
+            CurrentPlayingVisibility = CurrentSong != null ? Visibility.Visible : Visibility.Collapsed;
         }
     }
 }
