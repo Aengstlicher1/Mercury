@@ -1,9 +1,9 @@
-﻿using Accessibility;
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
 using LibVLCSharp.Shared;
 using Mercury.Models;
 using Mercury.Services;
+using System.Net.Http;
 using System.Windows.Controls;
 using Wpf.Ui;
 
@@ -23,6 +23,7 @@ namespace Mercury.Views.Pages
     {
         private readonly INavigationService _navigationService;
         private readonly IMediaPlayerService _mediaPlayerService;
+        private readonly HttpClient _httpClient = new HttpClient();
 
         [ObservableProperty]
         private MediaPlayer _mediaPlayer;
@@ -30,6 +31,8 @@ namespace Mercury.Views.Pages
         [ObservableProperty]
         private Song? _currentSong;
 
+        [ObservableProperty]
+        private string? _plainLyrics = string.Empty;
         public SongViewModel(INavigationService navigationService, IAppService appService, IMediaPlayerService mediaPlayerService)
         {
             _navigationService = navigationService;
@@ -38,13 +41,13 @@ namespace Mercury.Views.Pages
 
             WeakReferenceMessenger.Default.Register<CurrentSongChangedMessage>(this);
             _currentSong = _mediaPlayerService.CurrentSong;
-            
         }
 
-        public void Receive(CurrentSongChangedMessage message)
+        public async void Receive(CurrentSongChangedMessage message)
         {
             // Update the local property, which triggers the UI
             CurrentSong = message.Value;
+            PlainLyrics = (await LyricsService.GetLyricsAsync(message.Value))?.PlainLyrics;
         }
     }
 }

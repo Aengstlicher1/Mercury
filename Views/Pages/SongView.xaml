@@ -11,18 +11,31 @@
     mc:Ignorable="d">
 
     <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="2*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
         <TextBlock
-            Text="{Binding CurrentSong.Title}"
+            Grid.ColumnSpan="2"
+            Grid.Row="0"
+            Text="{Binding CurrentSong.Title, FallbackValue=Title}"
             FontSize="28"
             FontWeight="DemiBold" 
             FontFamily="Alef"
             HorizontalAlignment="Center"
+            VerticalAlignment="Top"
             Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
         <Border
-            HorizontalAlignment="Left"
-            Width="240"
-            Height="240"
-            Margin="16,4"
+            Grid.Column="0"
+            Grid.RowSpan="2"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Center"
+            Height="{Binding ActualWidth, RelativeSource={RelativeSource Mode=Self}}"
+            Margin="12,4"
             ClipToBounds="True"
             CornerRadius="6">
             <Border.Background>
@@ -32,5 +45,13 @@
                     Stretch="UniformToFill" />
             </Border.Background>
         </Border>
+
+        <TextBlock
+            Grid.Column="1"
+            Grid.Row="1"
+            Margin="32"
+            FontSize="16"
+            Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+            Text="{Binding PlainLyrics, FallbackValue=Lyrics amk}"/>
     </Grid>
 </Page>
