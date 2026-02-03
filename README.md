@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="Assets/Mercury.png" alt="Mercury Logo" width="150" height="150">
+<img src="Assets/Icon.png" alt="Mercury Logo" width="150" height="150">
 
 # Mercury Music Player
 
