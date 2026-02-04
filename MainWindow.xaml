@@ -41,13 +41,21 @@
                     <ui:MenuItem
                         Command="{Binding ShowWindowCommand}"
                         Header="Show Mercury"
-                        Icon="{ui:SymbolIcon Symbol=Add24}" />
+                        Icon="{ui:SymbolIcon Symbol=Add32}" />
+                    <Separator />
+                    <ui:MenuItem Header="Settings" Icon="{ui:SymbolIcon Symbol=Settings32}" />
+                    <Separator />
                     <ui:MenuItem
                         Command="{Binding KillWindowCommand}"
-                        Header="Exit Mercury"
-                        Icon="{ui:SymbolIcon Symbol=Subtract24}" />
-                    <Separator />
-                    <ui:MenuItem Header="Settings" Icon="{ui:SymbolIcon Symbol=Settings24}" />
+                        Header="Exit Mercury">
+                        <ui:MenuItem.Icon>
+                            <ui:SymbolIcon Symbol="Add32" Margin="-4">
+                                <ui:SymbolIcon.LayoutTransform>
+                                    <RotateTransform Angle="45" />
+                                </ui:SymbolIcon.LayoutTransform>
+                            </ui:SymbolIcon>
+                        </ui:MenuItem.Icon>
+                    </ui:MenuItem>
                 </ContextMenu>
             </tray:NotifyIcon.Menu>
         </tray:NotifyIcon>
@@ -75,11 +83,12 @@
                         </Grid.ColumnDefinitions>
                         <ui:TextBox
                             Grid.Column="0"
-                            VerticalAlignment="Stretch"
                             Margin="0,6"
-                            BorderThickness="1,1,0,1"
+                            VerticalAlignment="Stretch"
                             BorderBrush="{DynamicResource ControlStrokeColorSecondaryBrush}"
-                            Icon="{ui:SymbolIcon Symbol=Search24, FontSize=16}"
+                            BorderThickness="1,1,0,1"
+                            Icon="{ui:SymbolIcon Symbol=Search24,
+                                                 FontSize=16}"
                             PlaceholderText="Search songs, artist..."
                             Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                             <ui:TextBox.Resources>
@@ -88,10 +97,10 @@
                         </ui:TextBox>
                         <ComboBox
                             Grid.Column="1"
-                            VerticalAlignment="Stretch"
                             Margin="0,6"
-                            BorderThickness="0,1,1,1"
+                            VerticalAlignment="Stretch"
                             BorderBrush="{DynamicResource ControlStrokeColorSecondaryBrush}"
+                            BorderThickness="0,1,1,1"
                             ItemsSource="{Binding SearchFilters}"
                             SelectedValue="{Binding SearchFilter}">
                             <ComboBox.Resources>
@@ -145,7 +154,10 @@
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
-                <Grid Grid.RowSpan="2" Grid.Column="0" Visibility="{Binding CurrentPlayingVisibility, FallbackValue=Collapsed}">
+                <Grid
+                    Grid.RowSpan="2"
+                    Grid.Column="0"
+                    Visibility="{Binding CurrentPlayingVisibility, FallbackValue=Collapsed}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
